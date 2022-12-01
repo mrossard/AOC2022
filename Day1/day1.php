@@ -10,11 +10,7 @@ foreach($sep as $id){
     $calories[] = array_sum(array: array_slice(array: $input, offset: $start, length:$id-$start));
     $start = $id;
 }
-sort($calories);
+rsort($calories);
 
-$top[] = array_pop($calories);
-echo 'part 1 : ', $top[0], PHP_EOL;
-
-$top[] = array_pop($calories);
-$top[] = array_pop($calories);
-echo 'part 2 : ', array_sum($top), PHP_EOL;
+echo 'part 1 : ', $calories[0], PHP_EOL;
+echo 'part 2 : ', array_sum(array_slice($calories, 0,3)), PHP_EOL;
