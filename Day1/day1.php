@@ -4,7 +4,7 @@ $input = file('input.txt',FILE_IGNORE_NEW_LINES);
 
 $nbElves = 0;
 $calories = [];
-$max = 0; $maxId = -1;
+
 foreach ($input as $line){
     if($line == ''){
         $nbElves++;
