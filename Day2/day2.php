@@ -28,10 +28,10 @@ function getScores($input, $part): array
         callback: function ($line) use ($part) {
             [$opponent, $me] = array_map(
                 callback: function ($char) {
-                    return [ord($char)];
+                    return ord($char);
                 },
                 array   : explode(' ', $line));
-            return $part($opponent[0], $me[0]);
+            return $part($opponent, $me);
         },
         array   : $input);
 }
