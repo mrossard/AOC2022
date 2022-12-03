@@ -20,7 +20,7 @@ $charValue = function (string $char) {
         ord($char) - ord('A') + 27;
 };
 
-$needsTomove = array_map(function ($line) use ($getCommonChar, $charValue) {
+$needsTomove = array_map(function (string $line) use ($getCommonChar, $charValue) {
     return $charValue($getCommonChar(substr($line, strlen($line) / 2), substr($line, 0, strlen($line) / 2)));
 }, $input);
 
@@ -33,4 +33,4 @@ $badges = array_map(function ($group) use ($getCommonChar, $charValue) {
 },
     $groups);
 
-echo 'part 1 : ', array_sum($badges), PHP_EOL;
+echo 'part 2 : ', array_sum($badges), PHP_EOL;
