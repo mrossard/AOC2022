@@ -2,20 +2,10 @@
 
 $input = file($argv[1], FILE_IGNORE_NEW_LINES);
 
-function firstContainsSecond(array $first, array $second): bool
+function contained(array $first, array $second): bool
 {
-    if ($first[0] > $second[0]) {
-        return false;
-    }
-    if ($first[1] < $second[1]) {
-        return false;
-    }
-    return true;
-}
-
-function contained(array $a, array $b): bool
-{
-    return firstContainsSecond($a, $b) || firstContainsSecond($b, $a);
+    return !($first[0] > $second[0] || $first[1] < $second[1]) ||
+        !($second[0] > $first[0] || $second[1] < $first[1]);
 }
 
 function overlap(array $a, array $b): bool
@@ -31,9 +21,7 @@ function run($input, $part)
     return array_sum(array_map(
         function ($line) use ($part) {
             [$first, $second] = explode(',', $line);
-            $first = explode('-', $first);
-            $second = explode('-', $second);
-            return ($part($first, $second)) ? 1 : 0;
+            return ($part(explode('-', $first), explode('-', $second))) ? 1 : 0;
         },
         $input));
 }
