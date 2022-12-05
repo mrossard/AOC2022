@@ -26,7 +26,7 @@ foreach (explode("\n", $stacksInput) as $line) {
     $chars = str_split($line, 4);
     foreach ($chars as $pos => $char) {
         if (strlen(trim($char)) > 1) {
-            $stacks[$pos + 1][] = $char;
+            $stacks[$pos + 1][] = trim($char)[1];
         }
     }
 }
