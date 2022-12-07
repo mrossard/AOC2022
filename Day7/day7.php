@@ -7,7 +7,7 @@ class FsElement
      */
     public array $children;
 
-    function __construct(public string $name, public int $size = 0, public ?FsElement $parent = null)
+    public function __construct(public string $name, public int $size = 0, public ?FsElement $parent = null)
     {
     }
 
@@ -19,15 +19,20 @@ class FsElement
         return $this->parent->fullname() . '/' . $this->name;
     }
 
-    function getSize(): int
+    public function totalSize(): int
     {
         return $this->size + array_sum(array_map(function ($element) {
-                return $element->getSize();
+                return $element->totalSize();
             }, $this->children ?? []));
+    }
+
+    public function isDir(): bool
+    {
+        return (0 === $this->size);
     }
 }
 
-function readInput($file)
+function readInput($file): array
 {
     $commandStrings = explode("\n$ ", substr(file_get_contents($file), 2));
     $commands = [];
@@ -48,16 +53,13 @@ foreach (readInput($argv[1]) as $command) {
     //cd
     if (count($command) === 1) {
         $dirName = substr($command[0], 3);
-        $fullname = $current?->fullname() . '/' . $dirName;
-        if (array_key_exists($fullname, $elements)) {
-            $current = $elements[$fullname];
+        $fullName = $current?->fullname() . '/' . $dirName;
+        if (array_key_exists($fullName, $elements)) {
+            $current = $elements[$fullName];
         } else if ($dirName === '..') {
             $current = $current->parent;
         } else {
             //on est sur la racine
-            if ($current !== null) {
-                throw new RuntimeException('wtf?' . $current?->fullname() . '/' . $dirName);
-            }
             $fsElement = new FsElement($dirName, 0, null);
             $elements[$fsElement->fullname()] = $fsElement;
             $current = $fsElement;
@@ -75,16 +77,17 @@ foreach (readInput($argv[1]) as $command) {
 
 echo 'part 1 : ', array_reduce($elements, function ($carry, $item) {
     $size = $item->getSize();
-    if ($size <= 100000 && 0 === $item->size) {
+    if ($item->isDir() && $size <= 100000) {
         return ($carry ?? 0) + $size;
     }
     return $carry;
 }), PHP_EOL;
 
-$spaceNeeded = 30000000 - (70000000 - $elements['/']->getSize());
-echo 'part 2 : ', array_reduce($elements, function ($carry, $item) use ($spaceNeeded) {
+$totalSpace = 70000000;
+$spaceNeeded = 30000000 - ($totalSpace - $elements['/']->totalSize());
+echo 'part 2 : ', array_reduce($elements, function ($carry, $item) use ($spaceNeeded, $totalSpace) {
     $size = $item->getSize();
-    if (0 === $item->size && $size >= $spaceNeeded && $size < ($carry ?? 70000000)) {
+    if ($item->isDir() && $size >= $spaceNeeded && $size < ($carry ?? $totalSpace)) {
         return $size;
     }
     return $carry;
