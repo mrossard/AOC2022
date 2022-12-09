@@ -1,0 +1,15 @@
+{
+  "name": "mrossard/aoc2022",
+  "description": "advent of code 2022",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "mrossard",
+      "email": "manuel@rossard.fr"
+    }
+  ],
+  "require": {
+    "php-ds/php-ds": "^1.4"
+  }
+}
