@@ -6,24 +6,22 @@ $instructions = array_map(function ($line) {
     return [$data[0], (int)($data[1] ?? 0)];
 }, $input);
 
-$operations = [];
+$register[0] = 1;
 $offset = 1;
 foreach ($instructions as $i => $instruction) {
-    if ($instruction[0] == 'addx') {
-        $operations[$i + $offset + 2] = $instruction[1];
+    $register[$i + $offset] = $register[$i + $offset] ?? $register[$i + $offset - 1];
+    if ($instruction[0] === 'addx') {
+        $register[$i + $offset + 1] = $register[$i + $offset];
+        $register[$i + $offset + 2] = $register[$i + $offset + 1] + $instruction[1];
         $offset++;
     }
-}
-
-foreach (range(0, count($instructions) + $offset) as $cycle) {
-    $register[$cycle] = ($register[$cycle - 1] ?? 1) + ($operations[$cycle] ?? 0);
 }
 
 $total = 0;
 foreach ([20, 60, 100, 140, 180, 220] as $cycle) {
     $total += $register[$cycle] * $cycle;
 }
-echo 'Part 1 : ', $total, PHP_EOL;
+echo 'Part 1 :', $total, PHP_EOL;
 
 array_shift($register);
 $pixels = [];
