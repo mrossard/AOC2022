@@ -10,6 +10,7 @@
     }
   ],
   "require": {
-    "php-ds/php-ds": "^1.4"
+    "php-ds/php-ds": "^1.4",
+    "ext-gmp": "*"
   }
 }
