@@ -49,9 +49,6 @@ function monkeyBusinessRound(Map $monkeys, bool $worryLess, int $divideBy): Map
             }
             $targetId = gmp_mod($item, $monkey->get('test')['division']) == 0;
             $target = $monkeys->get($monkey->get('test')['targets'][$targetId]);
-            /**
-             * @var Queue $items
-             */
             $target->get('items')->push($item);
         }
     }
