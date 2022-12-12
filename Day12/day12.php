@@ -33,7 +33,7 @@ foreach ($input as $y => $line) {
     }
 }
 
-function stepsRequired($grid, $start, $target, $avoidAs = false): int
+function stepsRequired($grid, $start, $target, $avoidAs = false)
 {
     $toVisit = new Queue([[$start, 0]]);
     $visited = new Map();
