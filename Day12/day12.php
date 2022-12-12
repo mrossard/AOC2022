@@ -72,7 +72,7 @@ $part2 = array_reduce(
         return stepsRequired($grid, $start, $target, true);
     }, $allAs),
     function ($carry, $item) {
-        return min([$carry ?? 9999999999999, $item]);
+        return min([$carry ?? PHP_INT_MAX, $item]);
     }
 );
 
