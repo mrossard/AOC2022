@@ -33,7 +33,7 @@ foreach ($input as $y => $line) {
     }
 }
 
-function stepsRequired($grid, $start, $target)
+function stepsRequired($grid, $start, $target, $avoidAs = false): int
 {
     $toVisit = new Queue([[$start, 0]]);
     $visited = new Map();
@@ -45,6 +45,7 @@ function stepsRequired($grid, $start, $target)
         }
         $visited->put($current[0], $current[1]);
         [$currentX, $currentY] = $current[0];
+
         foreach ([[$currentX, $currentY - 1], [$currentX, $currentY + 1], [$currentX - 1, $currentY], [$currentX + 1, $currentY]] as [$x, $y]) {
             if (!array_key_exists($y, $grid) || !array_key_exists($x, $grid[$y]) || $grid[$y][$x] - $grid[$currentY][$currentX] > 1) {
                 continue;
@@ -53,7 +54,9 @@ function stepsRequired($grid, $start, $target)
             if (null !== $alreadyVisitedWithMovements && $alreadyVisitedWithMovements <= $current[1] + 1) {
                 continue;
             }
-            $toVisit->push([[$x, $y], $current[1] + 1]);
+            if (!$avoidAs || $grid[$y][$x] !== ord('a')) {
+                $toVisit->push([[$x, $y], $current[1] + 1]);
+            }
         }
     }
 
@@ -66,7 +69,7 @@ echo 'Part 1 : ', stepsRequired($grid, $startP1, $target), PHP_EOL;
 
 $part2 = array_reduce(
     array_map(function ($start) use ($grid, $target) {
-        return stepsRequired($grid, $start, $target);
+        return stepsRequired($grid, $start, $target, true);
     }, $allAs),
     function ($carry, $item) {
         return min([$carry ?? 9999999999999, $item]);
