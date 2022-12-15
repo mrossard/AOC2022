@@ -1,5 +1,6 @@
 <?php
 
+use Ds\Map;
 use Ds\Set;
 
 class Sensor
@@ -22,11 +23,6 @@ class Sensor
         return gmp_add(gmp_abs($this->position[0] - $x), gmp_abs($this->position[1] - $y));
     }
 
-    public function xRange(): array
-    {
-        return $this->xRangeParY($this->position[1]);
-    }
-
     public function xRangeParY($y): ?array
     {
         if (!$this->couvre($this->position[0], $y)) {
@@ -44,11 +40,17 @@ class Sensor
         return gmp_sub($this->distanceBeacon, $this->distance($this->position[0], $y));
     }
 
-    public function xRangeInRange(array $array, int $y)
+    public function justOutOfReach(): array
     {
-        if (!$this->couvre($this->position[0], $y)) {
-            return null;
+        $outOfReach = [];
+        for ($offsetX = 1; $offsetX < $this->distanceBeacon; $offsetX++) {
+            $offsetY = $this->distanceBeacon - $offsetX + 1;
+            $outOfReach[] = [$this->position[0] - $offsetX, $this->position[1] - $offsetY];
+            $outOfReach[] = [$this->position[0] + $offsetX, $this->position[1] + $offsetY];
+            $outOfReach[] = [$this->position[0] - $offsetX, $this->position[1] + $offsetY];
+            $outOfReach[] = [$this->position[0] + $offsetX, $this->position[1] - $offsetY];
         }
+        return $outOfReach;
     }
 }
 
@@ -140,11 +142,26 @@ $part1 = $ranges->reduce(function ($carry, $range) {
 echo 'Part 1 : ', $part1, PHP_EOL;
 
 //Part 2
-/*[$min, $max] = [gmp_init(0), gmp_init($argv[3])];
-for ($y = $min; $y <= $max; $y++) {
-    $uncovered = findUncovered($sensors, $y, $min, $max);
-    if (null !== $uncovered) {
-        echo 'Part 2 : ', $uncovered, ', ', $y, PHP_EOL;
-        break;
+[$min, $max] = [gmp_init(0), gmp_init($argv[3])];
+$outOfReach = new Map();
+foreach ($sensors as $id => $sensor) {
+    foreach ($sensor->justOutOfReach() as $candidate) {
+        if ($candidate[0] >= $min && $candidate[0] <= $max && $candidate[1] >= $min && $candidate[1] <= $max) {
+            foreach ($sensors as $otherId => $other) {
+                if ($otherId === $id) {
+                    continue;
+                }
+                if ($other->couvre($candidate[0], $candidate[1])) {
+                    continue 2;
+                }
+            }
+            echo 'found : ', $candidate[0], ' ', $candidate[1], ' frequency : ',
+            gmp_add($candidate[1], gmp_mul($candidate[0], 4000000)), PHP_EOL;
+            die;
+        }
     }
-}*/
+
+}
+
+
+var_dump($outOfReach);
