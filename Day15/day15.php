@@ -98,8 +98,8 @@ function xRanges(array $sensors, $y, $minVal = PHP_INT_MIN, $maxVal = PHP_INT_MA
             $carry->add($item);
         }
         foreach ($carry as $range) {
-            if ($range['min'] >= $item['min'] && $range['min'] <= $item['max'] ||
-                $item['min'] >= $range['min'] && $item['min'] <= $range['max']) {
+            if (($range['min'] >= $item['min'] && $range['min'] <= $item['max']) ||
+                ($item['min'] >= $range['min'] && $item['min'] <= $range['max'])) {
                 $carry->remove($range);
                 $carry->add(['min' => min($item['min'], $range['min']), 'max' => max($item['max'], $range['max'])]);
                 return $carry;
@@ -143,7 +143,6 @@ echo 'Part 1 : ', $part1, PHP_EOL;
 
 //Part 2
 [$min, $max] = [gmp_init(0), gmp_init($argv[3])];
-$outOfReach = new Map();
 foreach ($sensors as $id => $sensor) {
     foreach ($sensor->justOutOfReach() as $candidate) {
         if ($candidate[0] >= $min && $candidate[0] <= $max && $candidate[1] >= $min && $candidate[1] <= $max) {
