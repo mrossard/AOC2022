@@ -18,49 +18,43 @@ function readInput($line): array
     return $valve;
 }
 
-function reachablePositions(Map $minutePositions, $timeRemaining): Map
+function maxReleased($valves, $currentPosition, $previousPosition, $visited, $timeRemaining, $released)
 {
-    if ($timeRemaining <= 1) {
-        //rien d'intéressant à faire de plus...
-        return new Map();
+    if ($timeRemaining < 1) {
+        return ['path' => $currentPosition, 'released' => $released];
     }
-    $reachable = new Map();
-    foreach ($minutePositions as $path => $position) {
-        $current = $position['current'];
-        $released = $position['released'];
-        $valves = $position['valves'];
-        $open = $valves[$current]['open'];
-        foreach ($valves[$current]['neighbours'] as $neighbour) {
-            $move = $current . ($open ? 'o' : 'c') . ' -> ' . $neighbour;
-            if (str_contains($path, $move)) {
-                continue;
-            }
-            //si voisin pas ouvert, on peut aller l'ouvrir
-            if (!$valves[$neighbour]['open'] && $valves[$neighbour]['flowrate'] > 0) {
-                $valves[$neighbour]['open'] = true;
-                $reachable->put($path . ' -> ' . $neighbour . 'o',
-                    [
-                        'current' => $neighbour,
-                        'released' => $released + ($timeRemaining * $valves[$neighbour]['flowrate']),
-                        'open' => true,
-                        'valves' => $valves,
-                    ]);
-            }
-            //dans tous les cas on peut y aller sans ouvrir - si assez de temps pour continuer!
-            if ($timeRemaining > 2) {
-                $newPath = $path . ' -> ' . $neighbour . 'c';
-                $reachable->put($newPath, [
-                    'current' => $neighbour,
-                    'released' => $released,
-                    'open' => false,
-                    'valves' => $valves,
-                ]);
-            }
+    if (null !== $previousPosition) {
+        $visited[] = $previousPosition . $currentPosition;
+    }
+    $nextMax = [];
+    $tryCurrent = (!$valves[$currentPosition]['open']) && ($valves[$currentPosition]['flowrate'] > 0);
+    foreach ($valves[$currentPosition]['neighbours'] as $neighbour) {
+        if (!in_array($currentPosition . $neighbour, $visited, true)) {
+            //sans ouvrir
+            $nextMax[$neighbour . 'O'] = maxReleased($valves, $neighbour, $currentPosition, $visited, $timeRemaining - 1, $released);
+            if ($tryCurrent) {
+                $newValves = $valves;
+                $newValves[$currentPosition]['open'] = true;
+                $willRelease = $released + ($valves[$currentPosition]['flowrate'] * ($timeRemaining - 1));
 
+                $nextMax[$neighbour . 'C'] = maxReleased($newValves, $neighbour, $currentPosition, $visited,
+                    $timeRemaining - 2, $willRelease);
+            }
         }
     }
-
-    return $reachable;
+    if (count($nextMax) === 0) {
+        return ['path' => $currentPosition, 'released' => $released];
+    }
+    $path = '';
+    $max = 0;
+    foreach ($nextMax as $next) {
+        if ($next['released'] > $max) {
+            $max = $next['released'];
+            $path = $currentPosition . '->' . $next['path'];
+        }
+    }
+    //echo $timeRemaining, ' previous :', $previousPosition ?? '', ' current: ', $currentPosition, ' max: ', $max, PHP_EOL;
+    return ['path' => $path, 'released' => $max];
 }
 
 $valves = [];
@@ -70,23 +64,8 @@ foreach ($input as $line) {
 }
 
 $minutes = (int)$argv[2];
-$minutePositions = new Map();
-$start = new Map();
-$minutePositions[0] = new Map();
-$minutePositions[0]->put('AAc', ['current' => 'AA', 'released' => 0, 'valves' => $valves]);
+$maxReleased = maxReleased($valves, 'AA', null, [], $minutes, 0);
 
-for ($minute = 1; $minute <= $minutes; $minute++) {
-    echo '=== Minute ', $minute, ' === ', PHP_EOL;
-    $reachable = reachablePositions($minutePositions[$minute - 1], $minutes - $minute + 1);
-    /*    foreach ($reachable as $path => $position) {
-            echo ' - ', $path, PHP_EOL;
-        }*/
-    $minutePositions->put($minute, $reachable);
-}
+echo $maxReleased['path'], ' : ', $maxReleased['released'], PHP_EOL;
 
-foreach ($minutePositions as $minute => $positions) {
-    foreach ($positions as $path => $position) {
-        echo $path, PHP_EOL;
-    }
-}
 
