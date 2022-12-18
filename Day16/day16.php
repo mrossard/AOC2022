@@ -35,28 +35,91 @@ function getDistance(string $from, string $to, $valves): int
             if ($explored->hasKey($neighbour)) {
                 continue;
             }
-            $toExplore->push($neighbour, $distance + 1);
+            $toExplore->push([$neighbour, $distance + 1]);
         }
     }
 
     return $shortest;
 }
 
-function getDistances(array $valves): Map
+function getDistances(array $valves): array
 {
-    $distances = new Map;
+    $distances = [];
 
     foreach ($valves as $id => $valve) {
+        if ($valve['flowrate'] <= 0 && $id !== 'AA') {
+            continue;
+        }
         foreach ($valves as $otherId => $other) {
-            if ($id === $other || $other['flowrate'] === 0 || $distances->hasKey([$id, $otherId])) {
+            if ($id === $otherId || ($other['flowrate'] <= 0 && $otherId !== 'AA')) {
                 continue;
             }
             $distance = getDistance($id, $otherId, $valves);
-            $distances->put([$id, $otherId], $distance);
-            $distances->put([$otherId, $id], $distance);
+            $distances[$id][$otherId] = $distance;
+            $distances[$otherId][$id] = $distance;
         }
     }
     return $distances;
+}
+
+function possibleMoves($distances, $currentPosition, $remainingTime, $valves): array
+{
+    $positions = [];
+    foreach ($distances[$currentPosition] as $move => $distance) {
+//        if ($valves[$move]['flowrate'] <= 0) {
+//            continue;
+//        }
+        $willRemain = $remainingTime - $distance;
+        if ($willRemain > 1 && $valves[$move]['open'] === false) {
+            $positions[$move] = $willRemain;
+        }
+    }
+    return $positions;
+}
+
+function maxReleased(string $currentPosition, array $valves, array $distances, int $remainingTime, bool $withElephant = false)
+{
+    $releasedByCurrent = ($remainingTime - 1) * $valves[$currentPosition]['flowrate'];
+    if ($remainingTime <= 1) {
+        return [$currentPosition, $releasedByCurrent];
+    }
+    //on ouvre
+    if ($currentPosition != 'AA') {
+        $remainingTime--;
+        $valves[$currentPosition]['open'] = true;
+    }
+
+    $possibleMoves = possibleMoves($distances, $currentPosition, $remainingTime, $valves);
+
+    if (count($possibleMoves) === 0) {
+        return [$currentPosition, $releasedByCurrent];
+    }
+
+    $released = [];
+    $bestPath = [];
+    $relevantDistances = $distances;
+    unset($relevantDistances[$currentPosition]);
+    foreach ($relevantDistances as $position => $distance) {
+        unset($relevantDistances[$position][$currentPosition]);
+    }
+    //si éléphant, il faut lister les combinaisons dispo et appeler sur cette base.
+    //
+    foreach ($possibleMoves as $valve => $willRemain) {
+        $next = maxReleased($valve, $valves, $relevantDistances, $willRemain);
+        $released[$valve] = $releasedByCurrent + $next[1];
+        $bestPath[$valve] = $next[0];
+    }
+
+    $max = PHP_INT_MIN;
+    $nextValves = '';
+    foreach ($released as $next => $value) {
+        if ($value > $max) {
+            $max = $value;
+            $nextValves = $currentPosition . '->' . $bestPath[$next];
+        }
+    }
+
+    return [$nextValves, $max];
 }
 
 $valves = [];
@@ -67,4 +130,6 @@ foreach ($input as $line) {
 
 $distances = getDistances($valves);
 
-var_dump($distances);
+$released = maxReleased('AA', $valves, $distances, $argv[2]);
+
+echo 'Part 1 : ', $released[0], ' ', $released[1], PHP_EOL;
