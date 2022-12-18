@@ -1,6 +1,7 @@
 <?php
 
 use Ds\Map;
+use Ds\Queue;
 use Ds\Set;
 use Ds\Vector;
 
@@ -18,43 +19,44 @@ function readInput($line): array
     return $valve;
 }
 
-function maxReleased($valves, $currentPosition, $previousPosition, $visited, $timeRemaining, $released)
+function getDistance(string $from, string $to, $valves): int
 {
-    if ($timeRemaining < 1) {
-        return ['path' => $currentPosition, 'released' => $released];
-    }
-    if (null !== $previousPosition) {
-        $visited[] = $previousPosition . $currentPosition;
-    }
-    $nextMax = [];
-    $tryCurrent = (!$valves[$currentPosition]['open']) && ($valves[$currentPosition]['flowrate'] > 0);
-    foreach ($valves[$currentPosition]['neighbours'] as $neighbour) {
-        if (!in_array($currentPosition . $neighbour, $visited, true)) {
-            //sans ouvrir
-            $nextMax[$neighbour . 'O'] = maxReleased($valves, $neighbour, $currentPosition, $visited, $timeRemaining - 1, $released);
-            if ($tryCurrent) {
-                $newValves = $valves;
-                $newValves[$currentPosition]['open'] = true;
-                $willRelease = $released + ($valves[$currentPosition]['flowrate'] * ($timeRemaining - 1));
-
-                $nextMax[$neighbour . 'C'] = maxReleased($newValves, $neighbour, $currentPosition, $visited,
-                    $timeRemaining - 2, $willRelease);
+    $shortest = PHP_INT_MAX;
+    $toExplore = new Queue();
+    $toExplore->push([$from, 0]);
+    $explored = new Map();
+    while ($toExplore->count() !== 0) {
+        [$current, $distance] = $toExplore->pop();
+        $explored->put($current, $distance);
+        foreach ($valves[$current]['neighbours'] as $neighbour) {
+            if ($neighbour === $to) {
+                return $distance + 1;
             }
+            if ($explored->hasKey($neighbour)) {
+                continue;
+            }
+            $toExplore->push($neighbour, $distance + 1);
         }
     }
-    if (count($nextMax) === 0) {
-        return ['path' => $currentPosition, 'released' => $released];
-    }
-    $path = '';
-    $max = 0;
-    foreach ($nextMax as $next) {
-        if ($next['released'] > $max) {
-            $max = $next['released'];
-            $path = $currentPosition . '->' . $next['path'];
+
+    return $shortest;
+}
+
+function getDistances(array $valves): Map
+{
+    $distances = new Map;
+
+    foreach ($valves as $id => $valve) {
+        foreach ($valves as $otherId => $other) {
+            if ($id === $other || $other['flowrate'] === 0 || $distances->hasKey([$id, $otherId])) {
+                continue;
+            }
+            $distance = getDistance($id, $otherId, $valves);
+            $distances->put([$id, $otherId], $distance);
+            $distances->put([$otherId, $id], $distance);
         }
     }
-    //echo $timeRemaining, ' previous :', $previousPosition ?? '', ' current: ', $currentPosition, ' max: ', $max, PHP_EOL;
-    return ['path' => $path, 'released' => $max];
+    return $distances;
 }
 
 $valves = [];
@@ -63,9 +65,6 @@ foreach ($input as $line) {
     $valves[$valve['nom']] = $valve;
 }
 
-$minutes = (int)$argv[2];
-$maxReleased = maxReleased($valves, 'AA', null, [], $minutes, 0);
+$distances = getDistances($valves);
 
-echo $maxReleased['path'], ' : ', $maxReleased['released'], PHP_EOL;
-
-
+var_dump($distances);
