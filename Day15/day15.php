@@ -143,14 +143,17 @@ echo 'Part 1 : ', $part1, PHP_EOL;
 
 //Part 2
 [$min, $max] = [gmp_init(0), gmp_init($argv[3])];
+$checked = new Set();
 foreach ($sensors as $id => $sensor) {
     foreach ($sensor->justOutOfReach() as $candidate) {
-        if ($candidate[0] >= $min && $candidate[0] <= $max && $candidate[1] >= $min && $candidate[1] <= $max) {
+        if ($candidate[0] >= $min && $candidate[0] <= $max && $candidate[1] >= $min && $candidate[1] <= $max &&
+            !$checked->contains($candidate)) {
             foreach ($sensors as $otherId => $other) {
                 if ($otherId === $id) {
                     continue;
                 }
                 if ($other->couvre($candidate[0], $candidate[1])) {
+                    $checked->add($candidate);
                     continue 2;
                 }
             }
